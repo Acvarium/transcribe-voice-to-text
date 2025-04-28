@@ -5,7 +5,7 @@ import threading
 import time
 import ssl
 import argparse
-
+import time
 import whisper
 
 
@@ -48,15 +48,21 @@ def format_txt_output(result, include_timestamps, include_confidence):
     return "\n".join(output)
 
 
+
 def format_srt_output(result):
-    """Format transcription result as SRT"""
     output = []
     for i, segment in enumerate(result["segments"], 1):
-        start_time = time.strftime('%H:%M:%S,%f', time.gmtime(segment['start']))[:12]
-        end_time = time.strftime('%H:%M:%S,%f', time.gmtime(segment['end']))[:12]
+        start_time = time.strftime('%H:%M:%S', time.gmtime(segment['start']))
+        start_milliseconds = "{:03d}".format(int((segment['start'] - int(segment['start'])) * 1000))
+        formatted_start_time = f"{start_time},{start_milliseconds}"
+
+        end_time = time.strftime('%H:%M:%S', time.gmtime(segment['end']))
+        end_milliseconds = "{:03d}".format(int((segment['end'] - int(segment['end'])) * 1000))
+        formatted_end_time = f"{end_time},{end_milliseconds}"
+
         output.extend([
             str(i),
-            f"{start_time} --> {end_time}",
+            f"{formatted_start_time} --> {formatted_end_time}",
             segment['text'],
             ""
         ])
