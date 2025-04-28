@@ -65,12 +65,17 @@ def format_srt_output(result):
 
 def main():
     parser = argparse.ArgumentParser(description="Transcribe audio/video files using Whisper model")
-    parser.add_argument('input_file', help="Path to input media file")
+    parser.add_argument('-i', '--input_file', help="Path to input media file")
     parser.add_argument('-o', '--output_file', help="Optional path for output text file")
+    parser.add_argument('-m', '--model_name', help="Optional model name: tiny, base, small, medium, large-v3")
+    parser.add_argument('-l', '--language', help="Optional language: en, uk")
     args = parser.parse_args()
 
     input_path = args.input_file
     output_path = args.output_file
+    arg_model_name = args.model_name
+    arg_language = args.language
+    print(arg_model_name)
 
     if not os.path.exists(input_path):
         print(f"[ERROR] Media file not found: {input_path}")
@@ -83,7 +88,11 @@ def main():
     config = load_config()
     
     language = config.get("language", "uk")
+    if arg_language != None:
+        language = arg_language
     model_name = config.get("model", "medium")
+    if arg_model_name != None:
+        model_name = arg_model_name
     is_expandable_segments = config.get("expandable_segments", True)
     is_unverified_ssl_context = config.get("unverified_ssl_context", True)
     output_format = config.get("output_format", {
