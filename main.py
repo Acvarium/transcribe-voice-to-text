@@ -4,6 +4,7 @@ import os
 import threading
 import time
 import ssl
+import argparse
 
 import whisper
 
@@ -63,10 +64,24 @@ def format_srt_output(result):
 
 
 def main():
-    # Load configuration
+    parser = argparse.ArgumentParser(description="Transcribe audio/video files using Whisper model")
+    parser.add_argument('input_file', help="Path to input media file")
+    parser.add_argument('-o', '--output_file', help="Optional path for output text file")
+    args = parser.parse_args()
+
+    input_path = args.input_file
+    output_path = args.output_file
+
+    if not os.path.exists(input_path):
+        print(f"[ERROR] Media file not found: {input_path}")
+        return
+
+    print(f"[INFO] Input file: {input_path}")
+    if output_path:
+        print(f"[INFO] Output file: {output_path}")
+
     config = load_config()
     
-    # Get configuration values
     language = config.get("language", "uk")
     model_name = config.get("model", "medium")
     is_expandable_segments = config.get("expandable_segments", True)
@@ -83,35 +98,34 @@ def main():
     if is_expandable_segments:
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-    # Get media file path and load model
-    media_path = input("Enter the path to the media file: ")
-
-    if not os.path.exists(media_path):
-        print(f"Media file not found: {media_path}")
-        return
-
+    print(f"[INFO] Loading model '{model_name}'...")
     model = whisper.load_model(model_name)
 
-    # Start progress indicator
     stop_event = threading.Event()
     spinner_thread = threading.Thread(target=spinner, args=(stop_event,))
     spinner_thread.start()
 
-    # Perform transcription
-    result = model.transcribe(media_path, language=language)
-    
-    # Stop progress indicator
-    stop_event.set()
-    spinner_thread.join()
+    try:
+        result = model.transcribe(input_path, language=language)
+    finally:
+        stop_event.set()
+        spinner_thread.join()
 
-    # Prepare output
+    print("[INFO] Transcription finished.")
+
+    if not result:
+        print("[ERROR] Empty transcription result!")
+        return
+
     output_ext = output_format["type"].lower()
     if output_ext not in ["txt", "json", "srt"]:
         output_ext = "txt"
 
-    output_filename = os.path.splitext(media_path)[0] + f".{output_ext}"
+    if output_path is None:
+        output_path = os.path.splitext(input_path)[0] + f".{output_ext}"
 
-    # Format output content
+    print(f"[INFO] Saving output to: {output_path}")
+
     if output_ext == "txt":
         output_content = format_txt_output(
             result,
@@ -125,11 +139,12 @@ def main():
     else:  # srt
         output_content = format_srt_output(result)
 
-    # Save output
-    with open(output_filename, "w", encoding="utf-8") as file:
-        file.write(output_content)
-
-    print(f"Text saved to file {output_filename}")
+    try:
+        with open(output_path, "w", encoding="utf-8") as file:
+            file.write(output_content)
+        print(f"[SUCCESS] Transcription saved to {output_path}")
+    except Exception as e:
+        print(f"[ERROR] Failed to save file: {e}")
 
 
 if __name__ == "__main__":

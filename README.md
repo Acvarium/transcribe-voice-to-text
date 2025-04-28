@@ -22,6 +22,7 @@ A Python-based tool that uses OpenAI's Whisper model to transcribe media files t
 1. Clone this repository
 2. Copy `config.example.json` to `config.json` and setup
 3. Create a virtual environment:
+   
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # On Linux/Mac
@@ -29,6 +30,7 @@ A Python-based tool that uses OpenAI's Whisper model to transcribe media files t
    .venv\Scripts\activate  # On Windows
    ```
 4. Install dependencies:
+   
    ```bash
    pip install -r requirements.txt
    ```
@@ -38,12 +40,14 @@ A Python-based tool that uses OpenAI's Whisper model to transcribe media files t
 Edit `config.json` to customize the transcription settings:
 
 ### Basic Settings
+
 - `language`: Target language code (e.g., "uk" for Ukrainian, "en" for English)
 - `model`: Whisper model size ("tiny", "base", "small", "medium", "large-v3")
 - `expandable_segments`: Enable/disable expandable segments for better memory management
 - `unverified_ssl_context`: Enable/disable verify ssl certificate if you got `CERTIFICATE_VERIFY_FAILED` error
 
 ### Output Format Settings
+
 The `output_format` section allows you to customize how the transcription is saved:
 
 ```json
@@ -57,6 +61,7 @@ The `output_format` section allows you to customize how the transcription is sav
 ```
 
 Available options:
+
 - `type`: Output format type (choose one):
   - `"txt"`: Plain text format
   - `"json"`: JSON format with full transcription data
@@ -67,47 +72,63 @@ Available options:
 Example configurations:
 
 1. Basic text output:
-```json
-"output_format": {
+   
+   ```json
+   "output_format": {
     "type": "txt",
     "include_timestamps": false,
     "include_confidence": false
-}
-```
+   }
+   ```
 
 2. Text with timestamps and confidence:
-```json
-"output_format": {
+   
+   ```json
+   "output_format": {
     "type": "txt",
     "include_timestamps": true,
     "include_confidence": true
-}
-```
+   }
+   ```
 
 3. Full JSON output:
-```json
-"output_format": {
+   
+   ```json
+   "output_format": {
     "type": "json",
     "include_timestamps": true
-}
-```
+   }
+   ```
 
 4. SRT subtitles:
-```json
-"output_format": {
+   
+   ```json
+   "output_format": {
     "type": "srt"
-}
-```
+   }
+   ```
 
 ## Usage
 
-1. Run the script:
+1. Run the script with the path to the media file as a parameter:
+   
    ```bash
-   python main.py
+   python main.py /home/user/media/somemedia.ogg
    ```
-2. Enter the path to your media file when prompted
-3. Wait for the transcription to complete
-4. The transcribed text will be saved in a file with the appropriate extension (.txt, .json, or .srt)
+   
+   In this case the output file will be generated alongside of the original media file. For instance
+   
+   ```
+   /home/user/media/somemedia.txt
+   ```
+   
+   But you can specify the path to the output file after the -o flag, like this:
+   
+   ```
+   python main.py /home/user/media/somemedia.ogg -o /home/user/output.txt
+   ```
+2. Wait for the transcription to complete
+3. The transcribed text will be saved in a file with the appropriate extension (.txt, .json, or .srt)
 
 ## License
 
