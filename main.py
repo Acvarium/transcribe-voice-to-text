@@ -8,6 +8,7 @@ import argparse
 import time
 import whisper
 
+verbose = True
 
 def load_config():
     """Load and return configuration from config.json"""
@@ -20,9 +21,11 @@ def spinner(stop_event):
     for char in itertools.cycle(['|', '/', '-', '\\']):
         if stop_event.is_set():
             break
-        print('\rTranscribing... ' + char, end='', flush=True)
+        if verbose:
+            print('\rTranscribing... ' + char, end='', flush=True)
         time.sleep(0.1)
-    print('\rTranscription completed!     ')
+    if verbose:
+        print('\rTranscription completed!     ')
 
 
 def format_timestamp(seconds):
@@ -69,27 +72,40 @@ def format_srt_output(result):
     return "\n".join(output)
 
 
+def print_message(message):
+    if verbose:
+        print(message)
+
+
 def main():
+    global verbose 
     parser = argparse.ArgumentParser(description="Transcribe audio/video files using Whisper model")
     parser.add_argument('-i', '--input_file', help="Path to input media file")
     parser.add_argument('-o', '--output_file', help="Optional path for output text file")
     parser.add_argument('-m', '--model_name', help="Optional model name: tiny, base, small, medium, large-v3")
     parser.add_argument('-l', '--language', help="Optional language: en, uk")
-    args = parser.parse_args()
+    parser.add_argument('-t', '--timestamp', help="Include timestamp into output file if true, and exclude if false")
+    parser.add_argument('-c', '--confidence', help="Include confidence into output file if true, and exclude if false")
+    parser.add_argument('-p', '--print', action='store_true', help="Print resulting text")
+    
 
+    args = parser.parse_args()
     input_path = args.input_file
     output_path = args.output_file
     arg_model_name = args.model_name
     arg_language = args.language
-    print(arg_model_name)
+    arg_timestamp = args.timestamp
+    arg_confidence = args.confidence
+    arg_print = args.print
+    if arg_print:
+        verbose = False
 
     if not os.path.exists(input_path):
-        print(f"[ERROR] Media file not found: {input_path}")
+        print_message(f"[ERROR] Media file not found: {input_path}")
         return
-
-    print(f"[INFO] Input file: {input_path}")
+    print_message(f"[INFO] Input file: {input_path}")
     if output_path:
-        print(f"[INFO] Output file: {output_path}")
+        print_message(f"[INFO] Output file: {output_path}")
 
     config = load_config()
     
@@ -106,6 +122,16 @@ def main():
         "include_timestamps": False,
         "include_confidence": False
     })
+    if arg_timestamp != None:
+        if arg_timestamp == "true":
+            output_format["include_timestamps"] = True 
+        elif arg_timestamp == "false":
+            output_format["include_timestamps"] = False
+    if arg_confidence != "None":
+        if arg_confidence == "true":
+            output_format["include_timestamps"] = True
+        elif arg_confidence == "false":
+            output_format["include_timestamps"] = False
 
     if is_unverified_ssl_context:
         ssl._create_default_https_context = ssl._create_unverified_context
@@ -113,7 +139,7 @@ def main():
     if is_expandable_segments:
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-    print(f"[INFO] Loading model '{model_name}'...")
+    print_message(f"[INFO] Loading model '{model_name}'...")
     model = whisper.load_model(model_name)
 
     stop_event = threading.Event()
@@ -126,20 +152,23 @@ def main():
         stop_event.set()
         spinner_thread.join()
 
-    print("[INFO] Transcription finished.")
+    print_message("[INFO] Transcription finished.")
 
     if not result:
-        print("[ERROR] Empty transcription result!")
+        print_message("[ERROR] Empty transcription result!")
         return
 
     output_ext = output_format["type"].lower()
+    if input_path != None:
+        extension = os.path.splitext(input_path)[1]
+        if extension != "":
+            output_ext = extension
     if output_ext not in ["txt", "json", "srt"]:
         output_ext = "txt"
 
     if output_path is None:
         output_path = os.path.splitext(input_path)[0] + f".{output_ext}"
-
-    print(f"[INFO] Saving output to: {output_path}")
+    print_message(f"[INFO] Saving output to: {output_path}")
 
     if output_ext == "txt":
         output_content = format_txt_output(
@@ -157,10 +186,12 @@ def main():
     try:
         with open(output_path, "w", encoding="utf-8") as file:
             file.write(output_content)
-        print(f"[SUCCESS] Transcription saved to {output_path}")
+        print_message(f"[SUCCESS] Transcription saved to {output_path}")
     except Exception as e:
-        print(f"[ERROR] Failed to save file: {e}")
+        print_message(f"[ERROR] Failed to save file: {e}")
 
+    if arg_print:
+        print(output_content)
 
 if __name__ == "__main__":
     main()
