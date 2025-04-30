@@ -167,12 +167,6 @@ def main():
         elif args.confidence == "false":
             output_format["include_timestamps"] = False
 
-    if is_unverified_ssl_context:
-        ssl._create_default_https_context = ssl._create_unverified_context
-
-    if is_expandable_segments:
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
     result = send_file(input_path, args.language)
 
     output_ext = output_format["type"].lower()
@@ -200,16 +194,16 @@ def main():
     else:  # srt
         output_content = format_srt_output(result)
 
-    try:
-        with open(output_path, "w", encoding="utf-8") as file:
-            file.write(output_content)
-        print_message(f"[SUCCESS] Transcription saved to {output_path}")
-    except Exception as e:
-        print_message(f"[ERROR] Failed to save file: {e}")
-
-
     if args.print:
         print(output_content)
+    else:
+        try:
+            with open(output_path, "w", encoding="utf-8") as file:
+                file.write(output_content)
+            print_message(f"[SUCCESS] Transcription saved to {output_path}")
+        except Exception as e:
+            print_message(f"[ERROR] Failed to save file: {e}")
+
 
 if __name__ == "__main__":
     main()
