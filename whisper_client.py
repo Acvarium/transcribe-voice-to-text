@@ -79,13 +79,13 @@ def start_server():
         stderr=subprocess.DEVNULL,
         preexec_fn=os.setpgrp  # ВАЖЛИВО: запускає у власній групі процесів
     )
-    print("[INFO] Starting server...")
+    print_message("[INFO] Starting server...")
     for _ in range(10):
         if is_server_running():
-            print("[INFO] Server is running.")
+            print_message("[INFO] Server is running.")
             return True
         time.sleep(1)
-    print("[ERROR] Failed to start server.")
+    print_message("[ERROR] Failed to start server.")
     return False
 
 
@@ -101,9 +101,9 @@ def send_file(file_path, language):
 def stop_server():
     try:
         requests.post(SERVER_URL + "/shutdown")
-        print("[INFO] Server shutdown requested.")
+        print_message("[INFO] Server shutdown requested.")
     except:
-        print("[ERROR] Could not connect to server.")
+        print_message("[ERROR] Could not connect to server.")
 
 
 def main():
@@ -187,7 +187,6 @@ def main():
         output_path = os.path.splitext(input_path)[0] + f".{output_ext}"
     print_message(f"[INFO] Saving output to: {output_path}")
 
-    print(output_ext)
     if output_ext == "txt":
         output_content = format_txt_output(
             result,
