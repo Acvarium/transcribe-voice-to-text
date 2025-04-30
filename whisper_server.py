@@ -4,16 +4,41 @@ import whisper
 import os
 import threading
 import time
+import json
+import ssl
+
+CONFIG_FILE = "config.json"
+
 
 app = FastAPI()
 model = None
 last_used = time.time()
-INACTIVITY_TIMEOUT = 600  # 10 хвилин
+INACTIVITY_TIMEOUT = 300  # 5 хвилин
+
+def load_config(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+config = load_config(CONFIG_FILE)
+
+
+is_expandable_segments = config.get("expandable_segments", False)
+is_unverified_ssl_context = config.get("unverified_ssl_context", False)
+
+if is_unverified_ssl_context:
+    ssl._create_default_https_context = ssl._create_unverified_context
+    print("[INFO] Disabled SSL certificate verification")
+
+if is_expandable_segments:
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    print("[INFO] Enabled PyTorch expandable segments")
+
 
 @app.on_event("startup")
 def load_model():
     global model
     model = whisper.load_model("medium")
+
 
 def monitor_inactivity():
     while True:
@@ -23,23 +48,21 @@ def monitor_inactivity():
         time.sleep(30)
 
 @app.post("/transcribe/")
-async def transcribe(file: UploadFile, language: str = Form("uk"), timestamps: bool = Form(False), confidence: bool = Form(False)):
+async def transcribe(file: UploadFile, language: str = Form("uk")):
     global last_used
     last_used = time.time()
     temp_path = f"/tmp/{file.filename}"
     with open(temp_path, "wb") as f:
         f.write(await file.read())
     result = model.transcribe(temp_path, language=language)
+    return result
 
-    if not timestamps:
-        return {"text": result["text"]}
-    else:
-        return {"segments": result.get("segments", []), "text": result["text"]}
 
 @app.post("/shutdown")
 async def shutdown():
     print("Shutdown requested")
     os._exit(0)
+
 
 if __name__ == "__main__":
     threading.Thread(target=monitor_inactivity, daemon=True).start()

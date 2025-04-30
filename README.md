@@ -1,12 +1,11 @@
 # Voice to Text Transcription Tool
 
-A Python-based tool that uses OpenAI's Whisper model to transcribe media files to text. The tool supports multiple languages and provides a simple command-line interface.
+This utility allows you to transcribe audio or video files using OpenAI's Whisper model via a lightweight persistent local server. It automatically starts the server if it’s not running and sends files for transcription. The server remains in memory to avoid model reloading for each file, and it shuts down automatically after a configurable period of inactivity.
 
 ## Features
 
 - Supports multiple languages (configurable via config.json)
 - Uses OpenAI's Whisper model for high-quality transcription
-- Shows a progress spinner during transcription
 - Multiple output formats (TXT, JSON, SRT)
 - Optional timestamps and confidence scores
 - Configurable model size and expandable segments
@@ -20,7 +19,9 @@ A Python-based tool that uses OpenAI's Whisper model to transcribe media files t
 ## Installation
 
 1. Clone this repository
+
 2. Copy `config.example.json` to `config.json` and setup
+
 3. Create a virtual environment:
    
    ```bash
@@ -29,6 +30,7 @@ A Python-based tool that uses OpenAI's Whisper model to transcribe media files t
    # or
    .venv\Scripts\activate  # On Windows
    ```
+
 4. Install dependencies:
    
    ```bash
@@ -110,25 +112,45 @@ Example configurations:
 
 ## Usage
 
-1. Run the script with the path to the media file as a parameter:
-   
-   ```bash
-   python main.py /home/user/media/somemedia.ogg
-   ```
-   
-   In this case the output file will be generated alongside of the original media file. For instance
-   
-   ```
-   /home/user/media/somemedia.txt
-   ```
-   
-   But you can specify the path to the output file after the -o flag, like this:
-   
-   ```
-   python main.py /home/user/media/somemedia.ogg -o /home/user/output.txt
-   ```
-2. Wait for the transcription to complete
-3. The transcribed text will be saved in a file with the appropriate extension (.txt, .json, or .srt)
+#### 1. Transcribe a file
+
+```bash
+python transcribe.py -i path/to/audio.mp3 -o output.srt
+```
+
+Optional arguments:
+
+- `-i`, `--input` — path to the input media file
+
+- `-o`, `--output` — path to the output file 
+
+- `-l`, `--language` — Override language
+
+- `-t`, `--timestamp` — `true` / `false`, include timestamps
+
+- `-c`, `--confidence` — `true` / `false`, include confidence scores
+
+- `-p`, `--print` — Print transcription to terminal
+
+If the server is not running, it will be launched automatically.
+
+If the client is started without parameters, it will prompt you to enter the path to the input file and will save the resulting file alongside it
+
+#### 2. Stop the server manually
+
+```bash
+python transcribe.py --stop-server
+```
+
+## How it works
+
+* The first time you run the utility, it launches a lightweight HTTP server (whisper_server.py) in the background.
+
+* The Whisper model is loaded once and stays in memory.
+
+* Each transcribe.py run communicates with the server via HTTP and gets a transcription result.
+
+* If no new files are processed for (e.g.) 5 minutes, the server will shut down automatically to free up resources.
 
 ## License
 
