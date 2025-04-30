@@ -99,7 +99,9 @@ def main():
     arg_print = args.print
     if arg_print:
         verbose = False
-
+    if input_path == None:
+        input_path = input("Enter the path to the media file: ")
+        
     if not os.path.exists(input_path):
         print_message(f"[ERROR] Media file not found: {input_path}")
         return
