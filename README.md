@@ -139,7 +139,7 @@ If the client is started without parameters, it will prompt you to enter the pat
 #### 2. Stop the server manually
 
 ```bash
-python transcribe.py --stop-server
+python transcribe.py --stop
 ```
 
 ## How it works
