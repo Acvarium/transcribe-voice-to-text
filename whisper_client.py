@@ -125,7 +125,6 @@ def main():
 
     input_path = args.input_file
     output_path = args.output_file
-
     if input_path == None:
         input_path = input("Enter the path to the media file: ")
 
@@ -144,13 +143,12 @@ def main():
     print_message(f"[INFO] Input file: {input_path}")
 
     config = load_config()
-
     language = config.get("language", "uk")
     if args.language != None:
         language = args.language
 
-    is_expandable_segments = config.get("expandable_segments", True)
-    is_unverified_ssl_context = config.get("unverified_ssl_context", True)
+    result = send_file(input_path, language)
+
     output_format = config.get("output_format", {
         "type": "txt",
         "include_timestamps": False,
@@ -167,11 +165,11 @@ def main():
         elif args.confidence == "false":
             output_format["include_timestamps"] = False
 
-    result = send_file(input_path, args.language)
 
     output_ext = output_format["type"].lower()
-    if input_path != None:
-        extension = os.path.splitext(input_path)[1]
+
+    if output_path != None:
+        extension = os.path.splitext(output_path)[1]
         if extension != "":
             output_ext = extension
     if output_ext not in ["txt", "json", "srt"]:
