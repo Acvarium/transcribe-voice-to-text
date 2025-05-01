@@ -80,11 +80,11 @@ def start_server():
         preexec_fn=os.setpgrp  # ВАЖЛИВО: запускає у власній групі процесів
     )
     print_message("[INFO] Starting server...")
-    for _ in range(10):
+    for _ in range(15):
         if is_server_running():
             print_message("[INFO] Server is running.")
             return True
-        time.sleep(1)
+        time.sleep(2)
     print_message("[ERROR] Failed to start server.")
     return False
 
@@ -159,12 +159,12 @@ def main():
             output_format["include_timestamps"] = True 
         elif args.timestamp == "false":
             output_format["include_timestamps"] = False
+    
     if args.confidence != "None":
         if args.confidence == "true":
             output_format["include_timestamps"] = True
         elif args.confidence == "false":
             output_format["include_timestamps"] = False
-
 
     output_ext = output_format["type"].lower()
 
@@ -179,22 +179,22 @@ def main():
         output_path = os.path.splitext(input_path)[0] + f".{output_ext}"
     print_message(f"[INFO] Saving output to: {output_path}")
 
-    if output_ext == "txt":
-        output_content = format_txt_output(
-            result,
-            output_format.get("include_timestamps", False),
-            output_format.get("include_confidence", False)
-        )
-    elif output_ext == "json":
-        if not output_format.get("include_timestamps", False):
-            result = {"text": result["text"]}
-        output_content = json.dumps(result, ensure_ascii=False, indent=2)
-    else:  # srt
-        output_content = format_srt_output(result)
-
     if args.print:
-        print(output_content)
+        print(result["text"])
     else:
+        if output_ext == "txt":
+            output_content = format_txt_output(
+                result,
+                output_format.get("include_timestamps", False),
+                output_format.get("include_confidence", False)
+            )
+        elif output_ext == "json":
+            if not output_format.get("include_timestamps", False):
+                result = {"text": result["text"]}
+            output_content = json.dumps(result, ensure_ascii=False, indent=2)
+        else:  # srt
+            output_content = format_srt_output(result)
+
         try:
             with open(output_path, "w", encoding="utf-8") as file:
                 file.write(output_content)

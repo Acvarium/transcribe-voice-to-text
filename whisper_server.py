@@ -13,7 +13,7 @@ CONFIG_FILE = "config.json"
 app = FastAPI()
 model = None
 last_used = time.time()
-INACTIVITY_TIMEOUT = 300  # 5 хвилин
+INACTIVITY_TIMEOUT = 10  # 5 хвилин
 
 def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
